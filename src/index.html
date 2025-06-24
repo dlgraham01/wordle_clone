@@ -1,0 +1,223 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wordle Clone</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    #game {
+      text-align: center;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 5px;
+    }
+    .cell {
+      width: 40px;
+      height: 40px;
+      border: 2px solid #ddd;
+      font-size: 2rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-right: 5px;
+      user-select: none;
+    }
+    .hidden {
+      display: none;
+    }
+    .correct {
+      background-color: #6aaa64;
+      color: white;
+    }
+    .present {
+      background-color: #c9b458;
+      color: white;
+    }
+    .absent {
+      background-color: #787c7e;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div id="game">
+    <h1>Wordle Clone</h1>
+    <div class="row" id="keyboard-row">
+      <!-- Keyboard will be inserted here -->
+    </div>
+    <div id="board"></div>
+    <div id="message" class="hidden">Message goes here</div>
+  </div>
+
+  <script>
+    const ROWS = 6;
+    const COLS = 5;
+    const TARGET_WORD = "APPLE"; // For now, we'll use a hardcoded word
+
+    document.addEventListener('DOMContentLoaded', () => {
+      createBoard();
+      createKeyboard();
+      setupEventListeners();
+    });
+
+    function createBoard() {
+      const board = document.createElement('div');
+      for (let i = 0; i < ROWS; i++) {
+        const row = document.createElement('div');
+        row.className = 'row';
+        for (let j = 0; j < COLS; j++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          cell.dataset.row = i;
+          cell.dataset.col = j;
+          row.appendChild(cell);
+        }
+        board.appendChild(row);
+      }
+      document.getElementById('board').appendChild(board);
+    }
+
+    function createKeyboard() {
+      const keyboard = [
+        ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+        ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+        ['Enter', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'Delete']
+      ];
+
+      const keyboardRow = document.getElementById('keyboard-row');
+      keyboard.forEach(keyRow => {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'row';
+        keyRow.forEach(key => {
+          const keyButton = document.createElement('div');
+          keyButton.className = 'cell keyboard-key';
+          keyButton.textContent = key;
+          if (key === 'Enter' || key === 'Delete') {
+            keyButton.style.flexGrow = 2;
+          }
+          rowDiv.appendChild(keyButton);
+        });
+        keyboardRow.appendChild(rowDiv);
+      });
+    }
+
+    function setupEventListeners() {
+      document.addEventListener('keydown', handleKeyPress);
+      document.querySelectorAll('.keyboard-key').forEach(button => {
+        button.addEventListener('click', () => handleKeyboardClick(button.textContent));
+      });
+    }
+
+    let currentRow = 0;
+    let currentCol = 0;
+
+    function handleKeyPress(event) {
+      if (event.key === 'Enter') {
+        checkRow();
+      } else if (event.key === 'Backspace' || event.key === 'Delete') {
+        deleteLetter();
+      } else if (isLetter(event.key) && currentCol < COLS) {
+        addLetter(event.key.toUpperCase());
+      }
+    }
+
+    function handleKeyboardClick(key) {
+      if (key === 'Enter') {
+        checkRow();
+      } else if (key === 'Delete') {
+        deleteLetter();
+      } else {
+        addLetter(key);
+      }
+    }
+
+    function isLetter(letter) {
+      return letter.length === 1 && letter.match(/[a-zA-Z]/i);
+    }
+
+    function addLetter(letter) {
+      const cell = document.querySelector(`[data-row='${currentRow}'][data-col='${currentCol}']`);
+      if (cell && currentCol < COLS) {
+        cell.textContent = letter;
+        cell.dataset.letter = letter;
+        currentCol++;
+      }
+    }
+
+    function deleteLetter() {
+      if (currentCol > 0) {
+        currentCol--;
+        const cell = document.querySelector(`[data-row='${currentRow}'][data-col='${currentCol}']`);
+        if (cell) {
+          cell.textContent = '';
+          delete cell.dataset.letter;
+        }
+      }
+    }
+
+    function checkRow() {
+      const row = document.querySelector(`[data-row='${currentRow}']`);
+      const cells = row.querySelectorAll('.cell');
+
+      // Check if all cells are filled
+      let word = '';
+      for (let i = 0; i < COLS; i++) {
+        const cell = cells[i];
+        if (!cell.dataset.letter) {
+          showMessage('Not enough letters');
+          return;
+        }
+        word += cell.dataset.letter;
+      }
+
+      // Check the word against the target
+      let correct = true;
+      for (let i = 0; i < COLS; i++) {
+        const cell = cells[i];
+        const letter = cell.dataset.letter;
+
+        if (letter === TARGET_WORD[i]) {
+          cell.classList.add('correct');
+        } else if (TARGET_WORD.includes(letter)) {
+          cell.classList.add('present');
+          correct = false;
+        } else {
+          cell.classList.add('absent');
+          correct = false;
+        }
+      }
+
+      // Move to the next row or show win message
+      if (correct) {
+        showMessage(`Congratulations! You guessed the word "${TARGET_WORD}"`);
+      } else if (currentRow < ROWS - 1) {
+        currentRow++;
+        currentCol = 0;
+      } else {
+        showMessage(`Game over. The correct word was "${TARGET_WORD}"`);
+      }
+    }
+
+    function showMessage(message) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.textContent = message;
+      messageDiv.classList.remove('hidden');
+
+      setTimeout(() => {
+        messageDiv.classList.add('hidden');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
