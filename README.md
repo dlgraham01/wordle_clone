@@ -43,6 +43,8 @@ Then open your browser and navigate to `http://localhost:51312` to play the game
 
 You have 6 attempts to guess the word.
 
+The game uses a predefined list of words (stored in `src/words.js`). Each time you play, a random word from this list will be selected as the target word.
+
 ## License
 
 This project is licensed under the MIT License.

@@ -1,6 +1,4 @@
 
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -62,12 +60,10 @@
     <div id="message" class="hidden">Message goes here</div>
   </div>
 
-  <script type="module">
-    import { WORDS, getRandomWord } from './words.js';
-
+  <script>
     const ROWS = 6;
     const COLS = 5;
-    const TARGET_WORD = getRandomWord(WORDS);
+    const TARGET_WORD = "APPLE"; // For now, we'll use a hardcoded word
 
     document.addEventListener('DOMContentLoaded', () => {
       createBoard();
@@ -107,7 +103,6 @@
           const keyButton = document.createElement('div');
           keyButton.className = 'cell keyboard-key';
           keyButton.textContent = key;
-          keyButton.dataset.letter = key; // Add dataset attribute for letter
           if (key === 'Enter' || key === 'Delete') {
             keyButton.style.flexGrow = 2;
           }
@@ -120,7 +115,7 @@
     function setupEventListeners() {
       document.addEventListener('keydown', handleKeyPress);
       document.querySelectorAll('.keyboard-key').forEach(button => {
-        button.addEventListener('click', () => handleKeyboardClick(button));
+        button.addEventListener('click', () => handleKeyboardClick(button.textContent));
       });
     }
 
@@ -137,8 +132,7 @@
       }
     }
 
-    function handleKeyboardClick(button) {
-      const key = button.dataset.letter || button.textContent;
+    function handleKeyboardClick(key) {
       if (key === 'Enter') {
         checkRow();
       } else if (key === 'Delete') {
@@ -195,14 +189,11 @@
 
         if (letter === TARGET_WORD[i]) {
           cell.classList.add('correct');
-          updateKeyboardLetter(letter, 'correct');
         } else if (TARGET_WORD.includes(letter)) {
           cell.classList.add('present');
-          updateKeyboardLetter(letter, 'present');
           correct = false;
         } else {
           cell.classList.add('absent');
-          updateKeyboardLetter(letter, 'absent');
           correct = false;
         }
       }
@@ -218,29 +209,6 @@
       }
     }
 
-    function updateKeyboardLetter(letter, status) {
-      const keyboardButtons = document.querySelectorAll(`.keyboard-key[data-letter='${letter}']`);
-
-      // If the letter is already marked as 'correct', don't change it
-      if (status !== 'correct' && keyboardButtons.some(btn => btn.classList.contains('correct'))) {
-        return;
-      }
-
-      // If the letter is already marked as 'present' and now we're marking it as 'absent',
-      // skip this update to maintain the 'present' status
-      if (status === 'absent' && keyboardButtons.some(btn => btn.classList.contains('present'))) {
-        return;
-      }
-
-      // Apply the new status, or remove any existing status if needed
-      keyboardButtons.forEach(button => {
-        button.classList.remove('correct', 'present', 'absent');
-        if (status !== 'none') {
-          button.classList.add(status);
-        }
-      });
-    }
-
     function showMessage(message) {
       const messageDiv = document.getElementById('message');
       messageDiv.textContent = message;
@@ -253,5 +221,3 @@
   </script>
 </body>
 </html>
-
-
